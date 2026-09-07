@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#efe7dc">
+<meta name="description" content="Your Room — a quiet corner to read, write, plan, revise and breathe. Planner, notes, bookshelf and UPSC tracker in your browser.">
+<title>Your Room</title>
+
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%238b6f5b'/%3E%3Ctext x='50%25' y='54%25' text-anchor='middle' font-family='Georgia,serif' font-size='32' fill='%23fffdf9'%3EYR%3C/text%3E%3C/svg%3E">
+
+<style>
+:root{--bg:#f3eee7;--paper:#fffdf9;--ink:#2d2b29;--muted:#77716b;--accent:#8b6f5b;--line:#e7ddd1;--green:#71836f}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--ink)}
+a.skip{position:absolute;left:8px;top:8px;background:#000;color:#fff;padding:6px 10px;border-radius:6px;z-index:999;transform:translateY(-120%);transition:transform .18s}
+a.skip:focus{transform:translateY(0);outline:3px solid #fff}
+.app{max-width:1200px;margin:auto;min-height:100vh;padding:22px}
+header{display:flex;justify-content:space-between;align-items:center;padding:12px 4px 24px}
+.brand{font-family:Georgia,serif;font-size:28px}.sub{color:var(--muted);font-size:13px}
+nav{display:flex;gap:8px;flex-wrap:wrap}button,.btn{border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600}button:hover{transform:translateY(-1px)}
+.nav.active{background:var(--ink);color:white}
+.view{display:none}.view.active{display:block}
+.hero{background:var(--paper);border:1px solid var(--line);border-radius:28px;padding:30px;display:grid;grid-template-columns:1.5fr 1fr;gap:20px;box-shadow:0 12px 40px #7b69531a}
+.hero h1{font:42px Georgia,serif;margin:8px 0}.quote{color:var(--muted);line-height:1.6}
+.room{position:relative;min-height:260px;border-radius:22px;background:linear-gradient(180deg,#eee5d9,#e4d7c6);overflow:hidden;border:1px solid #d9cbbb}
+.window{position:absolute;right:24px;top:25px;width:150px;height:105px;border:7px solid #cdbca7;background:linear-gradient(#c9d8dc 0 60%,#b7a78e 60%);border-radius:8px}
+.shelf{position:absolute;left:25px;top:35px;width:210px;height:120px;border-bottom:10px solid #9d8068;background:repeating-linear-gradient(90deg,#9b765c 0 18px,#d5b79b 18px 27px,#8d6d57 27px 43px);opacity:.8}
+.desk{position:absolute;bottom:36px;left:50%;transform:translateX(-50%);width:72%;height:16px;background:#9c7c63;border-radius:8px}.desk:after{content:"";position:absolute;left:12%;top:16px;width:10px;height:75px;background:#896b56;box-shadow:calc(76% - 10px) 0 #896b56}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:18px}.big{font-size:28px;font-weight:700}.muted{color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}.panel{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:20px}
+h2{font:28px Georgia,serif;margin:4px 0 18px}h3{margin:5px 0 12px}
+input,textarea,select{width:100%;border:1px solid var(--line);background:#fffdfa;border-radius:10px;padding:11px;font:inherit}textarea{min-height:180px;resize:vertical}
+.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}.row button{flex:0 0 auto}
+.list{margin-top:14px;display:grid;gap:8px}.item{padding:12px;border:1px solid var(--line);border-radius:12px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.task.done{text-decoration:line-through;opacity:.55}
+button.task{all:unset;cursor:pointer;padding:0;text-align:left}
+.progressLabel{display:flex;justify-content:space-between;align-items:center;gap:8px}
+progress{width:100%;height:12px}
+.small{font-size:12px}.pill{padding:5px 9px;background:#eee7dd;border-radius:99px;font-size:12px}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#2d2b29;color:white;padding:10px 16px;border-radius:12px;display:none}
+@media(max-width:800px){.hero,.grid{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}header{align-items:flex-start;gap:12px;flex-direction:column}.hero h1{font-size:34px}.app{padding:14px}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+<div id="main" class="app" role="main" aria-labelledby="appTitle">
+<header>
+  <div><div id="appTitle" class="brand">Your Room</div><div class="sub">a little place for her books, thoughts &amp; dreams</div></div>
+  <nav aria-label="Main navigation">
+    <button class="nav active" data-view="home">Home</button>
+    <button class="nav" data-view="library">Bookshelf</button>
+    <button class="nav" data-view="notes">Desk</button>
+    <button class="nav" data-view="planner">Planner</button>
+    <button class="nav" data-view="tracker">UPSC Tracker</button>
+    <button class="nav" data-view="corner">Your Corner</button>
+  </nav>
+</header>
+
+<section id="home" class="view active" aria-labelledby="homeTitle">
+<div class="hero">
+ <div><div class="pill">Welcome home 🌿</div><h1 id="homeTitle">Your Room</h1><p class="quote">A quiet corner to read, write, plan, revise and breathe. Everything here is yours.</p>
+ <div class="row"><button class="btn" data-show="planner">Plan today</button><button class="btn" data-show="notes">Write a note</button></div></div>
+ <div class="room" aria-hidden="true"><div class="window"></div><div class="shelf"></div><div class="desk"></div></div>
+</div>
+<div class="cards" aria-hidden="false">
+ <div class="card"><div class="muted">Today's tasks</div><div class="big" id="homeTasks">0</div></div>
+ <div class="card"><div class="muted">Completed</div><div class="big" id="homeDone">0</div></div>
+ <div class="card"><div class="muted">Books</div><div class="big" id="homeBooks">0</div></div>
+ <div class="card"><div class="muted">Notes</div><div class="big" id="homeNotes">0</div></div>
+</div>
+</section>
+
+<section id="library" class="view" aria-labelledby="libTitle"><div class="panel"><h2 id="libTitle">📚 Bookshelf</h2>
+<p class="muted">Add PDFs from this device. They stay in this browser using local storage technology. No server is required for this starter version.</p>
+<label for="pdfInput" class="small">Select PDF files (max 25MB each)</label>
+<input id="pdfInput" type="file" accept="application/pdf" multiple aria-describedby="pdfHelp">
+<div id="pdfHelp" class="small muted">Files are stored locally in your browser.</div>
+<div id="books" class="list" aria-live="polite"></div></div></section>
+
+<section id="notes" class="view" aria-labelledby="notesTitle"><div class="grid"><div class="panel"><h2 id="notesTitle">✍️ Desk</h2>
+<label for="noteTitle" class="small">Note title</label>
+<input id="noteTitle" placeholder="Note title" aria-label="Note title"><br><br>
+<label for="noteBody" class="small">Note body</label>
+<textarea id="noteBody" placeholder="Write here..." aria-label="Note body"></textarea><br><br>
+<div class="row"><button id="saveNoteBtn" class="btn">Save note</button><button id="newNoteBtn" class="btn">New</button></div></div>
+<div class="panel"><h3>Saved notes</h3><div id="noteList" class="list" aria-live="polite"></div></div></div></section>
+
+<section id="planner" class="view" aria-labelledby="plannerTitle"><div class="grid"><div class="panel"><h2 id="plannerTitle">🗓️ Planner</h2>
+<label for="taskText" class="small">Task</label>
+<input id="taskText" placeholder="Today's task" aria-label="Task text">
+<label for="taskSubject" class="small">Subject</label>
+<select id="taskSubject" aria-label="Task subject"><option>GS1</option><option>GS2</option><option>GS3</option><option>GS4</option><option>Optional</option><option>Essay</option><option>Current Affairs</option><option>Revision</option></select><br><br>
+<button id="addTaskBtn" class="btn">Add task</button><div id="tasks" class="list" aria-live="polite"></div></div>
+<div class="panel"><h3>Today</h3><p class="muted" id="date"></p><div class="progressLabel"><div class="big" id="planPercent">0%</div><div class="small muted">progress</div></div><progress id="planProgress" value="0" max="100" aria-labelledby="planPercent"></progress><p class="muted">Small steps count. The mountain doesn't get to vote.</p></div></div></section>
+
+<section id="tracker" class="view" aria-labelledby="trackerTitle"><div class="grid"><div class="panel"><h2 id="trackerTitle">📊 UPSC Tracker</h2>
+<p>GS1</p><progress id="gs1" max="100" value="0" aria-label="GS1 progress"></progress><input type="number" min="0" max="100" placeholder="%" onchange="setProg('gs1',this.value)" aria-label="GS1 percent">
+<p>GS2</p><progress id="gs2" max="100" value="0"></progress><input type="number" min="0" max="100" placeholder="%" onchange="setProg('gs2',this.value)">
+<p>GS3</p><progress id="gs3" max="100" value="0"></progress><input type="number" min="0" max="100" placeholder="%" onchange="setProg('gs3',this.value)">
+<p>GS4</p><progress id="gs4" max="100" value="0"></progress><input type="number" min="0" max="100" placeholder="%" onchange="setProg('gs4',this.value)">
+<p>Optional</p><progress id="opt" max="100" value="0"></progress><input type="number" min="0" max="100" placeholder="%" onchange="setProg('opt',this.value)">
+</div>
+<div class="panel"><h3>Study stats</h3>
+<div class="row"><input id="hours" type="number" min="0" placeholder="Study hours" aria-label="Hours"><button class="btn" data-save="hours">Save</button></div><br>
+<div class="row"><input id="answers" type="number" min="0" placeholder="Answers written" aria-label="Answers"><button class="btn" data-save="answers">Save</button></div><br>
+<div class="row"><input id="tests" type="number" min="0" placeholder="Tests completed" aria-label="Tests"><button class="btn" data-save="tests">Save</button></div>
+<div id="stats" class="list" aria-live="polite"></div></div></div></section>
+
+<section id="corner" class="view" aria-labelledby="cornerTitle"><div class="panel"><h2 id="cornerTitle">💌 Your Corner</h2>
+<p class="muted">A tiny corner that isn't about UPSC.</p>
+<label for="loveText" class="small">Write something for her</label>
+<textarea id="loveText" placeholder="Write something here for her..." aria-label="Love note"></textarea><br><br><button id="saveLoveBtn" class="btn">Save</button><p id="savedLove" class="quote" aria-live="polite"></p></div></section>
+</div>
+
+<div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+<script>
+/* Small site script — localStorage-based. Kept simple and accessible. */
+const $ = id => document.getElementById(id);
+let tasks = JSON.parse(localStorage.tasks || '[]'),
+    notes = JSON.parse(localStorage.notes || '[]'),
+    books = JSON.parse(localStorage.books || '[]'),
+    stats = JSON.parse(localStorage.stats || '{}'),
+    prog = JSON.parse(localStorage.prog || '{}');
+
+function show(id){
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  $(id).classList.add('active');
+  document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active', x.dataset.view===id));
+  render();
+}
+
+/* Nav buttons (and hero quick buttons) */
+document.querySelectorAll('.nav').forEach(b => b.addEventListener('click', () => show(b.dataset.view)));
+document.querySelectorAll('[data-show]').forEach(b=>b.addEventListener('click', e=>show(b.dataset.show)));
+
+/* Toast */
+function toast(t){
+  let x = $('toast');
+  x.textContent = t;
+  x.style.display = 'block';
+  setTimeout(()=>x.style.display='none', 1600);
+}
+
+/* Rendering */
+function render(){
+  $('date').textContent = new Date().toLocaleDateString(undefined, {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  $('tasks').innerHTML = tasks.map((t,i) => `
+    <div class="item">
+      <div style="flex:1">
+        <button class="task ${t.done?'done':''}" data-toggle="${i}" aria-pressed="${t.done}">
+          ${t.done? '☑' : '☐'} ${esc(t.text)} <span class="pill">${esc(t.sub)}</span>
+        </button>
+      </div>
+      <div><button class="btn" data-del="${i}" aria-label="Delete task ${i}">×</button></div>
+    </div>
+  `).join('');
+  let done = tasks.filter(x=>x.done).length, p = tasks.length ? Math.round(done/tasks.length*100) : 0;
+  $('planPercent').textContent = p + '%'; $('planProgress').value = p;
+  $('homeTasks').textContent = tasks.length; $('homeDone').textContent = done; $('homeBooks').textContent = books.length; $('homeNotes').textContent = notes.length;
+
+  $('noteList').innerHTML = notes.map((n,i)=>`<div class="item"><div style="flex:1"><button class="btn" data-edit="${i}"><b>${esc(n.title)}</b><br><span class="small muted">${esc(n.body).slice(0,90)}</span></button></div><div><button class="btn" data-delnote="${i}">×</button></div></div>`).join('');
+
+  ['gs1','gs2','gs3','gs4','opt'].forEach(k => { if($(k)) $(k).value = prog[k] || 0; });
+
+  $('stats').innerHTML = Object.entries(stats).map(([k,v])=>`<div class="item"><b>${esc(k)}</b><span>${v}</span></div>`).join('');
+  $('savedLove').textContent = localStorage.love || '';
+  $('loveText').value = localStorage.love || '';
+  $('books').innerHTML = books.map((b,i)=>`<div class="item"><div style="flex:1">📄 <b>${esc(b.name)}</b><br><span class="small muted">${b.size}</span></div><div><button class="btn" data-open="${i}">Open</button> <button class="btn" data-delbook="${i}">×</button></div></div>`).join('');
+
+  // attach event listeners for generated elements
+  document.querySelectorAll('[data-toggle]').forEach(el => el.addEventListener('click', ()=> toggleTask(+el.dataset.toggle)));
+  document.querySelectorAll('[data-del]').forEach(el => el.addEventListener('click', ()=> delTask(+el.dataset.del)));
+  document.querySelectorAll('[data-edit]').forEach(el => el.addEventListener('click', ()=> editNote(+el.dataset.edit)));
+  document.querySelectorAll('[data-delnote]').forEach(el => el.addEventListener('click', ()=> delNote(+el.dataset.delnote)));
+  document.querySelectorAll('[data-open]').forEach(el => el.addEventListener('click', ()=> openBook(+el.dataset.open)));
+  document.querySelectorAll('[data-delbook]').forEach(el => el.addEventListener('click', ()=> delBook(+el.dataset.delbook)));
+  document.querySelectorAll('[data-save]').forEach(el => el.addEventListener('click', e => saveStat(e.currentTarget.dataset.save)));
+}
+
+/* Utilities */
+function esc(s){return String(s).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
+
+/* Tasks */
+function addTask(){let t=$('taskText').value.trim(); if(!t) return; tasks.push({text:t,sub:$('taskSubject').value,done:false}); $('taskText').value=''; localStorage.tasks = JSON.stringify(tasks); render()}
+function toggleTask(i){tasks[i].done = !tasks[i].done; localStorage.tasks = JSON.stringify(tasks); render()}
+function delTask(i){tasks.splice(i,1); localStorage.tasks = JSON.stringify(tasks); render()}
+
+/* Notes */
+function saveNote(){let title=$('noteTitle').value.trim()||'Untitled', body=$('noteBody').value; notes.push({title,body}); localStorage.notes=JSON.stringify(notes); clearNote(); render(); toast('Note saved')}
+function editNote(i){$('noteTitle').value=notes[i].title; $('noteBody').value=notes[i].body; show('notes')}
+function delNote(i){notes.splice(i,1); localStorage.notes=JSON.stringify(notes); render()}
+function clearNote(){$('noteTitle').value=''; $('noteBody').value=''}
+
+/* Progress & Stats */
+function setProg(k,v){prog[k] = Math.max(0, Math.min(100, +v||0)); localStorage.prog = JSON.stringify(prog); render()}
+function saveStat(k){stats[k] = +$(k).value || 0; localStorage.stats = JSON.stringify(stats); render(); toast('Updated')}
+
+/* Books (PDFs) */
+$('pdfInput').addEventListener('change', async e => {
+  for(const f of e.target.files){
+    if(f.size > 25*1024*1024){ toast('PDF over 25MB skipped'); continue }
+    let r = new FileReader();
+    await new Promise(res => { r.onload = () => { books.push({name:f.name, size:(f.size/1048576).toFixed(1)+' MB', data: r.result}); localStorage.books = JSON.stringify(books); render(); res(); }; r.readAsDataURL(f); });
+  }
+  e.target.value='';
+});
+function openBook(i){let w=window.open(); if(!w) { toast('Pop-up blocked'); return } w.document.write(`<title>${esc(books[i].name)}</title><iframe style="width:100%;height:100vh;border:0" src="${books[i].data}"></iframe>`)}
+function delBook(i){books.splice(i,1); localStorage.books = JSON.stringify(books); render()}
+
+/* Corner */
+$('saveLoveBtn').addEventListener('click', ()=>{ localStorage.setItem('love', $('loveText').value); render(); toast('Saved 🌷') });
+
+/* Buttons bind */
+$('addTaskBtn').addEventListener('click', addTask);
+$('saveNoteBtn').addEventListener('click', saveNote);
+$('newNoteBtn').addEventListener('click', clearNote);
+document.querySelectorAll('[data-save]').forEach(btn => btn.addEventListener('click', e => saveStat(e.currentTarget.dataset.save)));
+
+render();
+
+/* Service worker registration */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed', err));
+  });
+}
+</script>
+</body>
+</html>
